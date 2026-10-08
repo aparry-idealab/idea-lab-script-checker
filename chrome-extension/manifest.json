@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "IDEA Lab Script Checker — Canvas",
+  "version": "1.0.0",
+  "description": "Read-only last-hurdle quick checker for Canvas LMS course content. Click the toolbar icon on a Canvas Page, Assignment, Discussion or Syllabus to flag obvious errors, read-aloud issues, bullet-list use, house style and inclusivity concerns. Runs entirely in your browser — no data leaves your machine, no API keys, nothing is ever edited.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "Run IDEA Lab Script Checker on this Canvas page",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["activeTab", "scripting"]
+}

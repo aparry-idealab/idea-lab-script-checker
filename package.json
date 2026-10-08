@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node server.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:extension": "node scripts/copy-rule-engine.js"
   },
   "devDependencies": {
     "office-addin-dev-certs": "^1.13.0",

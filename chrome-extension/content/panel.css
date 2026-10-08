@@ -1,0 +1,205 @@
+/**
+ * IDEA Lab Script Checker — Canvas panel styling.
+ * Inserted via chrome.scripting.insertCSS; scoped under #idea-lab-script-checker-panel
+ * so it can't leak into / clash with Canvas's own page styles.
+ */
+#idea-lab-script-checker-panel {
+  all: initial;
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 360px;
+  max-width: 90vw;
+  height: 100vh;
+  background: #ffffff;
+  border-left: 1px solid #d0d0d0;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.15);
+  z-index: 2147483647;
+  font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+  color: #222;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+#idea-lab-script-checker-panel * {
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+#idea-lab-script-checker-panel .idea-lab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  font-weight: 600;
+  font-size: 14px;
+  border-bottom: 1px solid #e1dfdd;
+  background: #f3f2f1;
+}
+
+#idea-lab-script-checker-panel .idea-lab-close {
+  all: unset;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px 6px;
+  color: #444;
+}
+#idea-lab-script-checker-panel .idea-lab-close:hover {
+  color: #000;
+}
+
+#idea-lab-script-checker-panel .idea-lab-banner {
+  background: #fff4ce;
+  border-bottom: 1px solid #ffd335;
+  padding: 8px 14px;
+  font-size: 12px;
+}
+
+#idea-lab-script-checker-panel .idea-lab-summary {
+  padding: 8px 14px;
+  font-size: 12.5px;
+  color: #444;
+  border-bottom: 1px solid #e1dfdd;
+}
+
+#idea-lab-script-checker-panel .idea-lab-tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e1dfdd;
+}
+
+#idea-lab-script-checker-panel .idea-lab-tally-badge {
+  background: #f3f2f1;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 64px;
+  cursor: pointer;
+}
+#idea-lab-script-checker-panel .idea-lab-tally-badge.zero {
+  opacity: 0.55;
+}
+#idea-lab-script-checker-panel .idea-lab-tally-badge .count {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+#idea-lab-script-checker-panel .idea-lab-results {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0 24px 0;
+}
+
+#idea-lab-script-checker-panel .idea-lab-empty {
+  padding: 20px 14px;
+  color: #555;
+  font-size: 12.5px;
+}
+
+#idea-lab-script-checker-panel .idea-lab-category {
+  border-bottom: 1px solid #e1dfdd;
+}
+
+#idea-lab-script-checker-panel .idea-lab-category-header {
+  all: unset;
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 12.5px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+#idea-lab-script-checker-panel .idea-lab-category.collapsed .idea-lab-category-body {
+  display: none;
+}
+
+#idea-lab-script-checker-panel .idea-lab-category-body {
+  padding: 0 14px 8px 14px;
+}
+
+#idea-lab-script-checker-panel .idea-lab-issue {
+  padding: 8px 6px;
+  margin: 0 -6px;
+  border-bottom: 1px dashed #e1dfdd;
+  cursor: pointer;
+  border-radius: 4px;
+}
+#idea-lab-script-checker-panel .idea-lab-issue:last-child {
+  border-bottom: none;
+}
+#idea-lab-script-checker-panel .idea-lab-issue:hover {
+  background: #faf9f8;
+}
+#idea-lab-script-checker-panel .idea-lab-issue.active {
+  background: rgba(0, 120, 212, 0.08);
+  border-left: 3px solid #0078d4;
+  padding-left: 9px;
+}
+
+#idea-lab-script-checker-panel .idea-lab-issue-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+#idea-lab-script-checker-panel .idea-lab-severity {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+#idea-lab-script-checker-panel .idea-lab-severity-error {
+  background: #d13438;
+}
+#idea-lab-script-checker-panel .idea-lab-severity-warning {
+  background: #ffb900;
+}
+#idea-lab-script-checker-panel .idea-lab-severity-info {
+  background: #0078d4;
+}
+
+#idea-lab-script-checker-panel .idea-lab-issue-loc {
+  font-size: 11px;
+  color: #666;
+}
+
+#idea-lab-script-checker-panel .idea-lab-issue-snippet {
+  font-style: italic;
+  background: #faf9f8;
+  border-left: 3px solid #e1dfdd;
+  padding: 4px 8px;
+  margin: 4px 0;
+  border-radius: 2px;
+  font-size: 12px;
+}
+
+#idea-lab-script-checker-panel .idea-lab-issue-message {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+#idea-lab-script-checker-panel .idea-lab-issue-rule {
+  font-size: 10.5px;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* Highlight briefly applied to the flagged element on the host Canvas
+   page itself (not inside the panel) when an issue is clicked. */
+.idea-lab-highlight-target {
+  outline: 3px solid #ffb900 !important;
+  outline-offset: 2px !important;
+  background-color: rgba(255, 185, 0, 0.18) !important;
+  transition: outline-color 0.2s ease;
+}

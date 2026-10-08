@@ -85,12 +85,26 @@ idea-lab-script-checker/
 ├── src/
 │   ├── rules/
 │   │   └── ruleEngine.js        # Pure rule-checking logic (no Office.js dependency)
+│   ├── canvas/
+│   │   └── htmlToParagraphs.js  # HTML -> paragraph converter for Canvas rich-text content
 │   └── taskpane/
 │       ├── taskpane.html
 │       ├── taskpane.css
 │       └── taskpane.js          # Office.js glue: reads doc, calls ruleEngine, renders UI
+├── chrome-extension/            # Browser extension: run the same checks on Canvas LMS pages
+│   ├── manifest.json
+│   ├── background.js
+│   ├── lib/ruleEngine.js        # auto-generated copy, see "Chrome extension" section below
+│   ├── content/
+│   │   ├── domExtractor.js
+│   │   ├── panel.js
+│   │   └── panel.css
+│   └── icons/
+├── scripts/
+│   └── copy-rule-engine.js      # keeps chrome-extension/lib/ruleEngine.js in sync
 ├── tests/
-│   └── ruleEngine.test.js       # Vitest unit tests for the rule engine
+│   ├── ruleEngine.test.js       # Vitest unit tests for the rule engine
+│   └── htmlToParagraphs.test.js # Vitest unit tests for the Canvas HTML converter
 └── assets/
     └── icon-32.png / icon-64.png / icon-80.png
 ```
@@ -102,14 +116,70 @@ npm install
 npm test
 ```
 
-This runs the Vitest suite in `tests/ruleEngine.test.js` against
-`src/rules/ruleEngine.js`, covering realistic example scripts (clean scripts,
-and scripts deliberately containing each class of flagged issue) for every
-rule category above.
+This runs the Vitest suite (`tests/ruleEngine.test.js` and
+`tests/htmlToParagraphs.test.js`) covering realistic example scripts (clean
+scripts, and scripts deliberately containing each class of flagged issue)
+for every rule category above.
+
+## Chrome extension: checking Canvas LMS course content
+
+The same rule engine also ships as a small, dependency-free **Chrome
+extension** so the media team can run the identical checks directly on
+Canvas course content (Pages, Assignments, Discussion Topics, the
+Syllabus) — no API token, no server, no network calls at all. It's the
+lowest-friction way to get this tool working against Canvas: it just reads
+whatever rich-text content is already rendered on the Canvas page you have
+open in the browser.
+
+**How it works:**
+
+- Click the toolbar icon only when you want to run a check (`activeTab`
+  permission — nothing runs automatically or in the background, and Chrome
+  doesn't even show a host-permission warning on install).
+- It finds the page's main rich-text container (Syllabus, Assignment
+  description, Discussion message, or a Page's body), walks it into the
+  same paragraph shape the rule engine expects, and runs the unchanged
+  `ScriptCheckerRules.checkDocument()` function from `src/rules/ruleEngine.js`.
+- Results render in a slide-in side panel: a tally per category, then a
+  collapsible, categorised list of flagged issues — same model as the Word
+  task pane.
+- **Click a flagged issue to jump to it**: the page scrolls to and briefly
+  highlights (a yellow outline, not an edit) the exact paragraph/list item
+  on the Canvas page.
+- It is **read-only** — it only reads `textContent` and toggles a temporary
+  CSS class for highlighting. It never edits the page or saves anything
+  back to Canvas.
+
+**Known limitation:** it checks whatever is currently *rendered* on the
+page (a Page/Assignment/Discussion/Syllabus "view", or the Syllabus). It
+does not yet reach inside the Rich Content Editor while you're actively
+editing (TinyMCE's edit iframe), and it checks one page at a time rather
+than bulk-scanning an entire course — view/publish the page first, then run
+the checker, as a last-hurdle pass before sharing with students.
+
+**Installing it locally (unpacked, for now — not published to the Chrome
+Web Store):**
+
+1. `cd` into the repo and run `npm run build:extension` (this copies the
+   latest `src/rules/ruleEngine.js` into `chrome-extension/lib/`; re-run it
+   any time the rule engine changes).
+2. In Chrome, go to `chrome://extensions`, turn on **Developer mode**
+   (top-right toggle).
+3. Click **Load unpacked** and select the `chrome-extension/` folder in
+   this repo.
+4. Open a Canvas Page, Assignment, Discussion Topic, or Syllabus page, then
+   click the IDEA Lab Script Checker icon in the toolbar to run a check.
+   Click it again to close the panel.
+
+By default the extension works on any page (it only activates when you
+click the icon), so there's nothing Canvas-domain-specific to configure —
+if your institution's Canvas uses a custom domain rather than
+`*.instructure.com`, it will still work, since `activeTab` grants access to
+whatever tab is currently active regardless of domain.
 
 ## Sharing this with colleagues (recommended, no setup required for them)
 
-The add-in is hosted on **GitHub Pages** at:
+The add-in is hosted on **GitHub Pages** at: 
 
 **https://aparry-idealab.github.io/idea-lab-script-checker/**
 
