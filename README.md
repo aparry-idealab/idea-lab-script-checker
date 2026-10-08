@@ -80,30 +80,6 @@ idea-lab-script-checker/
     └── icon-32.png / icon-64.png / icon-80.png
 ```
 
-## A note on how this project was delivered
-
-This project was authored in a sandboxed session whose write access was
-restricted to flat files in a scratch folder (no subdirectories, no
-`node`/`npm` execution were permitted there). The code above is complete and
-was carefully hand-traced against the test suite, but could not be executed
-in that session. A `reconstruct.sh` script is included alongside these flat
-files — **run it locally** (where you have normal shell access) to lay out
-the directory tree shown above, decode the placeholder icons, and then run
-`npm install` / `npm test` yourself to verify everything passes:
-
-```bash
-cd /path/to/the/folder/containing/these/flat/files
-chmod +x reconstruct.sh
-./reconstruct.sh
-cd idea-lab-script-checker
-npm install
-npm test
-```
-
-If you are instead looking at an already-assembled copy of this project
-(i.e. you can already see the `src/`, `tests/` folders above), you can skip
-straight to `npm install && npm test` below.
-
 ## Running the tests
 
 ```bash
