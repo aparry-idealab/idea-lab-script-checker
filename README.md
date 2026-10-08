@@ -92,12 +92,50 @@ This runs the Vitest suite in `tests/ruleEngine.test.js` against
 and scripts deliberately containing each class of flagged issue) for every
 rule category above.
 
-## Sideloading in Word on a Mac (for local testing)
+## Sharing this with colleagues (recommended, no setup required for them)
+
+The add-in is hosted on **GitHub Pages** at:
+
+**https://aparry-idealab.github.io/idea-lab-script-checker/**
+
+This is kept in sync with the `main` branch — every push rebuilds it
+automatically within a minute or two, so updates reach everyone
+immediately with no reinstall needed.
+
+To let a colleague use it, just send them **`manifest-share.xml`** (from
+the repo root) — it points at the GitHub Pages URL above rather than
+`localhost`, so they do **not** need Node.js, this repository, or a local
+dev server/certificate at all. They:
+
+1. Open Word (desktop or [Word Online](https://office.com)).
+2. **Home tab → Add-ins → Upload My Add-in** (on Word Online) or
+   **Home tab → Add-ins → More Add-ins → Developer Add-ins → Upload My
+   Add-in** (on Word desktop/Mac — this UI varies a bit by Word version and
+   platform; see "Sideloading in Word on a Mac" below for the full set of
+   menu paths we found work).
+3. Select the `manifest-share.xml` file you sent them.
+4. The **"Check Script"** button appears — click it to open the task pane.
+
+For wider/automatic rollout across the whole team (no manual upload step
+per person at all), ask your Microsoft 365 administrator to deploy
+`manifest-share.xml` via **Microsoft 365 admin center → Settings →
+Integrated apps** (a.k.a. Centralized Deployment) — this requires tenant
+admin access but then every targeted user gets the add-in automatically.
+
+> `manifest.xml` (no suffix) is the **local development** manifest — it
+> points at `https://localhost:3000` and is only useful on a machine that
+> also has this repo checked out and `npm start` running (see below).
+> `manifest-share.xml` is the one to actually hand out.
+
+## Sideloading in Word on a Mac (for local development)
 
 Office Add-ins must be served over **HTTPS** with a certificate Word trusts
 — `file://` URLs are not supported for the task pane. The included
 `server.js` uses `office-addin-dev-certs` to generate and trust a local
-development certificate, so you don't need any external hosting.
+development certificate, so you don't need any external hosting. (This is
+only needed if you're developing/testing changes locally — see "Sharing
+this with colleagues" above for the no-setup option everyone else should
+use.)
 
 1. Install dependencies and trust the local dev certificate (one-time):
 
@@ -142,6 +180,27 @@ development certificate, so you don't need any external hosting.
 > Add-ins → "..." → Upload My Add-in) and point it directly at
 > `manifest.xml` — this works the same way and avoids any folder-watching
 > quirks on some Word builds.
+
+### Troubleshooting sideloading (found while testing on Word for Mac)
+
+- **The ribbon "Add-ins" button opens the Store, not your sideloaded
+  add-in.** Look for a small dropdown arrow next to the Add-ins icon, or a
+  **"Developer Add-ins"** tab inside the Add-ins dialog (separate from
+  Store / Admin Managed / My Add-ins) — that's where shared-folder
+  manifests show up.
+- **Don't confuse this with the "Templates and Add-ins" dialog** (reached
+  via the ribbon's **Developer** tab) — that's for legacy VBA/`.dotm`
+  macro templates and will never show an Office.js add-in.
+- **Task pane opens but shows a blank/broken page** ("might be
+  temporarily down") when using the local dev server: this is usually the
+  browser not yet trusting the self-signed dev certificate for that exact
+  host/port — an iframe (which is what the task pane is) can't show a
+  "proceed anyway" certificate warning. Fix: open
+  `https://localhost:3000/src/taskpane/taskpane.html` directly in a normal
+  browser tab first, accept any certificate warning there, then reopen the
+  task pane in Word. (This is only relevant to the local-dev `manifest.xml`
+  — `manifest-share.xml`, served over GitHub Pages with a real certificate,
+  doesn't have this problem at all.)
 
 ## Design principles
 
