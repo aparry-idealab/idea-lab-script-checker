@@ -174,12 +174,10 @@
 
   function renderIssue(issue) {
     var el = document.createElement("div");
-    el.className = "issue";
+    var isLocatable = typeof issue.paragraphIndex === "number";
+    el.className = "issue" + (isLocatable ? " issue-clickable" : "");
 
-    var location =
-      issue.paragraphIndex === null || issue.paragraphIndex === undefined
-        ? "Document-wide"
-        : "Paragraph " + issue.paragraphIndex;
+    var location = isLocatable ? "Paragraph " + issue.paragraphIndex : "Document-wide";
 
     el.innerHTML =
       '<div class="issue-top-row">' +
@@ -200,9 +198,108 @@
       "</div>" +
       '<div class="issue-rule">Rule: ' +
       escapeHtml(issue.rule) +
-      "</div>";
+      "</div>" +
+      (isLocatable
+        ? '<div class="issue-locate-hint">📍 Click to highlight this in the document</div>'
+        : "");
+
+    if (isLocatable) {
+      el.setAttribute("role", "button");
+      el.setAttribute("tabindex", "0");
+      el.setAttribute("aria-label", "Highlight this issue in the document (paragraph " + issue.paragraphIndex + ")");
+      el.addEventListener("click", function () {
+        highlightIssueInDocument(issue, el);
+      });
+      el.addEventListener("keydown", function (evt) {
+        if (evt.key === "Enter" || evt.key === " ") {
+          evt.preventDefault();
+          highlightIssueInDocument(issue, el);
+        }
+      });
+    }
 
     return el;
+  }
+
+  /**
+   * Strips the leading/trailing ellipsis markers added by the rule engine's
+   * snippet truncation (see makeSnippet in ruleEngine.js) so the remaining
+   * text can be used as a literal search string against the live document.
+   * Read-only: only ever used with Range.select(), never to edit text.
+   */
+  function extractSearchTextFromSnippet(snippet) {
+    if (!snippet) return "";
+    var cleaned = snippet.replace(/^…\s*/, "").replace(/\s*…$/, "").trim();
+    // Word's search API caps search strings at 255 characters.
+    return cleaned.slice(0, 250);
+  }
+
+  /**
+   * Selects (highlights) the paragraph/text a flagged issue refers to in
+   * the open document. Purely a selection — never modifies the document.
+   * Falls back to selecting the whole paragraph if the exact snippet text
+   * can no longer be found (e.g. the document was edited since the last
+   * check), and reports that back in the status line rather than failing
+   * silently.
+   */
+  function highlightIssueInDocument(issue, el) {
+    document.querySelectorAll(".issue.active").forEach(function (n) {
+      n.classList.remove("active");
+    });
+    if (el) el.classList.add("active");
+
+    Word.run(function (context) {
+      var paragraphs = context.document.body.paragraphs;
+      paragraphs.load("items");
+      return context.sync().then(function () {
+        var idx = issue.paragraphIndex;
+        if (idx < 0 || idx >= paragraphs.items.length) {
+          throw new Error("paragraph-not-found");
+        }
+        var paragraph = paragraphs.items[idx];
+        var searchText = extractSearchTextFromSnippet(issue.snippet);
+
+        if (searchText) {
+          var range = paragraph.getRange();
+          var results = range.search(searchText, {
+            matchCase: false,
+            matchWholeWord: false,
+            ignoreSpace: true,
+          });
+          results.load("items");
+          return context.sync().then(function () {
+            if (results.items.length > 0) {
+              results.items[0].select();
+            } else {
+              paragraph.select();
+            }
+            return context.sync().then(function () {
+              return "exact";
+            });
+          });
+        }
+
+        paragraph.select();
+        return context.sync().then(function () {
+          return "paragraph";
+        });
+      });
+    })
+      .then(function (precision) {
+        setStatus(
+          precision === "exact"
+            ? "Highlighted the flagged text in paragraph " + issue.paragraphIndex + "."
+            : "Highlighted paragraph " + issue.paragraphIndex + " (exact text wasn't found - the document may have changed since the last check)."
+        );
+      })
+      .catch(function (err) {
+        console.error(err);
+        setStatus(
+          "Couldn't locate paragraph " +
+            issue.paragraphIndex +
+            " in the document — it may have changed since the last check. Try Refresh and click the issue again."
+        );
+      });
   }
 
   function escapeHtml(str) {

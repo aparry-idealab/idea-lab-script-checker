@@ -571,29 +571,69 @@
   // 4) HOUSE STYLE / EDITORIAL COMPLIANCE  (+ 5) SESSION NUMBERING
   // =================================================================
 
+  var NUMBER_WORDS = [
+    "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+    "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen",
+    "eighteen", "nineteen", "twenty",
+  ];
+
+  var FUTURE_PROOFING_NOTE =
+    " Avoid specific session/activity numbers in scripts in case sessions are reordered later; use words like 'session five' sparingly and only if numbering is stable, or avoid entirely.";
+
   function checkSessionActivityNumbers(text, paragraphIndex) {
     var issues = [];
-    var re = /\b(session|activity)\s+(\d+(?:\.\d+)*)\b/gi;
+    // Matches both digit forms ("session 5", "activity 3.3") and spelled-out
+    // word forms ("session one", "Session One") so every numbered
+    // session/activity reference is surfaced for future-proofing, not just
+    // the digit ones.
+    var re = new RegExp(
+      "\\b(session|activity)\\s+(\\d+(?:\\.\\d+)*|" + NUMBER_WORDS.join("|") + ")\\b",
+      "gi"
+    );
     var match;
     while ((match = re.exec(text))) {
-      var word = match[1].toLowerCase();
+      var keyword = match[1];
+      var keywordLower = keyword.toLowerCase();
       var number = match[2];
-      var isSpecificSubReference = number.indexOf(".") !== -1 || word === "activity";
-      var message = isSpecificSubReference
-        ? 'Reference to a specific activity/page number ("' +
+      var isDigitForm = /^\d/.test(number);
+      var isSpecificSubReference = (isDigitForm && number.indexOf(".") !== -1) || keywordLower === "activity";
+      var isExactlyCorrectCase = match[0] === match[0].toLowerCase();
+
+      var message;
+      var severity;
+      if (isSpecificSubReference) {
+        message =
+          'Reference to a specific activity/page number ("' +
           match[0] +
-          '") — avoid these entirely, as they may move during production.'
-        : 'Scripts should spell out session numbers in lowercase words (e.g. "session five"), not digits ("' + match[0] + '").';
+          '") — avoid these entirely, as they may move during production.';
+        severity = "warning";
+      } else if (isDigitForm) {
+        message =
+          'Scripts should spell out session numbers in lowercase words (e.g. "session five"), not digits ("' +
+          match[0] +
+          '").';
+        severity = "warning";
+      } else if (!isExactlyCorrectCase) {
+        message =
+          'Session references should use a lowercase "s" and a lowercase spelled-out number, e.g. "session five", not "' +
+          match[0] +
+          '".';
+        severity = "warning";
+      } else {
+        // Correctly-formatted "session five" — not a style violation, just
+        // surfaced as an informational future-proofing note.
+        message = 'Session reference found ("' + match[0] + '").';
+        severity = "info";
+      }
+
       issues.push(
         makeIssue({
           category: "sessionNumbering",
-          severity: "warning",
+          severity: severity,
           paragraphIndex: paragraphIndex,
           snippet: makeSnippet(text, match.index, match[0].length),
-          message:
-            message +
-            " Avoid specific session/activity numbers in scripts in case sessions are reordered later; use words like 'session five' sparingly and only if numbering is stable, or avoid entirely.",
-          rule: "Session Numbering: Numeral used with session/activity",
+          message: message + FUTURE_PROOFING_NOTE,
+          rule: "Session Numbering: Numeral/word number used with session/activity",
         })
       );
     }

@@ -279,10 +279,27 @@ describe("5) Session numbering", function () {
     expect(hits.some(function (h) { return h.message.indexOf("avoid these entirely") !== -1; })).toBe(true);
   });
 
-  it("does not flag correctly spelled-out session references", function () {
+  it("surfaces correctly spelled-out session references as an info-level future-proofing note (not a style violation)", function () {
     var result = checkDocument(["Please revisit session five before we continue."]);
     var hits = categoryIssues(result, "sessionNumbering");
-    expect(hits.length).toBe(0);
+    expect(hits.length).toBe(1);
+    expect(hits[0].severity).toBe("info");
+    expect(hits[0].message.indexOf("Avoid specific session/activity numbers")).toBeGreaterThanOrEqual(0);
+  });
+
+  it("flags spelled-out session numbers with incorrect capitalisation", function () {
+    var result = checkDocument(["Please revisit Session One before we continue."]);
+    var hits = categoryIssues(result, "sessionNumbering");
+    expect(hits.length).toBe(1);
+    expect(hits[0].severity).toBe("warning");
+    expect(hits[0].message.indexOf("lowercase")).toBeGreaterThanOrEqual(0);
+  });
+
+  it("flags spelled-out activity references the same as numeral ones", function () {
+    var result = checkDocument(["Please attempt activity three before the next session."]);
+    var hits = categoryIssues(result, "sessionNumbering");
+    expect(hits.length).toBe(1);
+    expect(hits[0].message.indexOf("avoid these entirely")).toBeGreaterThanOrEqual(0);
   });
 });
 

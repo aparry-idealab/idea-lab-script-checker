@@ -19,6 +19,14 @@ leaders/learning designers, before the scripts go into production.
   for every flag you get the **category**, the **paragraph location** and a
   **short quote**, a **plain-language explanation**, and the **specific rule
   reference**.
+- **Click an issue to highlight it in the document.** Clicking (or pressing
+  Enter/Space on) a flagged item selects the matching text in the open Word
+  document so you can quickly see it in context. This is a **selection
+  only** — it uses Office.js's read-only `Range.select()` API and never
+  edits the document. If the exact wording can no longer be found (e.g. the
+  script was edited after the last check), the whole paragraph is selected
+  instead and the status line tells you so — just click **Refresh** and try
+  again.
 - An optional "fix" control per flagged item is a possible future stretch
   feature and is **not implemented** in this version — the add-in never
   writes to the document.
@@ -48,8 +56,15 @@ leaders/learning designers, before the scripts go into production.
    bullet/list formatting rules (stem colon, capitalisation, full-stop
    consistency) for any lists intentionally kept.
 5. **Session/activity numbering** — every "session N" / "activity N.N"
-   numeral reference is surfaced in its own category so the media team can
-   see at a glance what might break if the module is reordered later.
+   reference is surfaced in its own category so the media team can see at a
+   glance what might break if the module is reordered later. This covers
+   both numeral forms ("session 5") **and** spelled-out number words
+   ("Session one", "session five") — numeral forms and incorrectly-cased
+   word forms are flagged as style warnings (should be lowercase spelled-out
+   words, e.g. "session five"), while correctly-formatted word references
+   are still surfaced as a lower-severity informational note, since any
+   specific session/activity reference is worth a second glance before
+   production in case the module is reordered later.
 6. **Inclusivity & diversity language** — a lookup table of terms to avoid
    (with suggested alternatives), plus a low-confidence heuristic for
    generic gendered pronouns following a non-specific subject (e.g. "a
