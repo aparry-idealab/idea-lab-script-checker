@@ -1,0 +1,17 @@
+{
+  "name": "idea-lab-script-checker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "IDEA Lab Script Checker - a read-only Word (Office.js) task pane add-in that runs a last-hurdle quick check of video scripts before production, for a university Business School media team. Runs fully offline/client-side: no external API calls, no data leaves the machine.",
+  "main": "src/taskpane/taskpane.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "office-addin-dev-certs": "^1.13.0",
+    "vitest": "^0.34.6"
+  },
+  "license": "UNLICENSED"
+}

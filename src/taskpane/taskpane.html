@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+  <title>IDEA Lab Script Checker</title>
+  <!--
+    Office.js is the standard Office Add-in runtime library, loaded from
+    Microsoft's CDN as is required for every Word add-in to talk to the
+    host application. It is a one-time framework load - the add-in itself
+    makes no further network/API calls, and no document content is ever
+    sent anywhere. See README.md for fully air-gapped/self-hosting notes.
+  -->
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <link rel="stylesheet" href="taskpane.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>IDEA Lab Script Checker</h1>
+    <p class="disclaimer">
+      ⚠️ Quick checker only — not a substitute for editorial or subject review.
+      Flags possible issues for a non-specialist media team to glance over before production; always defer to the module leader/learning designer and editorial team on anything uncertain.
+    </p>
+  </header>
+
+  <div class="controls">
+    <button id="run-check-btn" class="primary-btn">Run check</button>
+    <button id="refresh-btn" class="secondary-btn" title="Re-run the check">Refresh</button>
+    <span id="status-text" class="status-text" aria-live="polite"></span>
+  </div>
+
+  <div id="tally" class="tally" aria-live="polite"></div>
+
+  <main id="results" class="results"></main>
+
+  <footer class="app-footer">
+    <small>Runs fully offline, client-side only. No document content leaves this machine. Read-only: this add-in never edits your document.</small>
+  </footer>
+
+  <script src="../rules/ruleEngine.js"></script>
+  <script src="taskpane.js"></script>
+</body>
+</html>
