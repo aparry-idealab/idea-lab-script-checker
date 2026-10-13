@@ -181,6 +181,13 @@ editing (TinyMCE's edit iframe), and it checks one page at a time rather
 than bulk-scanning an entire course — view/publish the page first, then run
 the checker, as a last-hurdle editorial pass before sharing with students.
 
+**If you click the icon and nothing happens:** Chrome never allows *any*
+extension to run on its own internal pages (`chrome://...`, a blank new
+tab, the Chrome Web Store, etc) — this is a Chrome-wide restriction, not a
+bug in the extension. The toolbar icon will briefly show a red "!" badge
+with an explanatory tooltip in that case. Navigate to the actual Canvas
+page you want to check first, then click the icon.
+
 **Installing it locally (unpacked, for now — not published to the Chrome
 Web Store):**
 
