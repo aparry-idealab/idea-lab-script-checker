@@ -4,6 +4,13 @@
  * (activeTab permission — no broad host permissions, nothing runs
  * automatically, mirroring the "explicit Run Check" model of the
  * Word add-in version of this tool).
+ *
+ * Scope for the Canvas Editorial Checker: house style/editorial
+ * compliance and inclusivity (both from the House Style and
+ * Conventions Guide) plus general obvious-error proofreading — see
+ * ALLOWED_CATEGORIES in content/panel.js. Read-aloud flow, bullet
+ * points, and session/activity numbering are script-specific checks
+ * and are intentionally excluded here.
  */
 chrome.action.onClicked.addListener(async (tab) => {
   if (!tab.id) return;

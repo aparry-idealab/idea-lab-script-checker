@@ -1,5 +1,5 @@
 /**
- * IDEA Lab Script Checker — Canvas DOM extractor
+ * IDEA Lab Canvas Editorial Checker — DOM extractor
  * ---------------------------------------------------------------
  * Finds the main rich-text content container for whatever Canvas
  * page is currently open (a Page, Assignment, Discussion Topic, or

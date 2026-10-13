@@ -121,15 +121,31 @@ This runs the Vitest suite (`tests/ruleEngine.test.js` and
 scripts, and scripts deliberately containing each class of flagged issue)
 for every rule category above.
 
-## Chrome extension: checking Canvas LMS course content
+## Chrome extension: IDEA Lab Canvas Editorial Checker
 
 The same rule engine also ships as a small, dependency-free **Chrome
-extension** so the media team can run the identical checks directly on
-Canvas course content (Pages, Assignments, Discussion Topics, the
-Syllabus) — no API token, no server, no network calls at all. It's the
-lowest-friction way to get this tool working against Canvas: it just reads
-whatever rich-text content is already rendered on the Canvas page you have
-open in the browser.
+extension**, the **IDEA Lab Canvas Editorial Checker**, so the media team
+can run an editorial pass directly on Canvas course content (Pages,
+Assignments, Discussion Topics, the Syllabus) — no API token, no server, no
+network calls at all. It's the lowest-friction way to get this tool working
+against Canvas: it just reads whatever rich-text content is already
+rendered on the Canvas page you have open in the browser.
+
+**Scope — narrower than the Word add-in, by design:** this tool is purely
+an **editorial** aid for course content, checked against the single
+**House Style and Conventions Guide**. It only shows:
+
+- **Obvious errors** — doubled words, stray punctuation, unmatched
+  quotes/brackets, and a small list of possible typos.
+- **House style & editorial compliance** — hyphenation, dashes, numbers,
+  dates, abbreviations, spelling, and formatting conventions.
+- **Inclusivity & diversity language** — terms flagged by the house style
+  inclusive-language guidance.
+
+Read-aloud flow, bullet-points-in-script, and session/activity numbering
+are **intentionally excluded** here — those checks are specific to video
+*scripts* (and the other two style documents), not general course content,
+and aren't relevant to an editorial pass over a Canvas Page or Assignment.
 
 **How it works:**
 
@@ -139,23 +155,31 @@ open in the browser.
 - It finds the page's main rich-text container (Syllabus, Assignment
   description, Discussion message, or a Page's body), walks it into the
   same paragraph shape the rule engine expects, and runs the unchanged
-  `ScriptCheckerRules.checkDocument()` function from `src/rules/ruleEngine.js`.
+  `ScriptCheckerRules.checkDocument()` function from `src/rules/ruleEngine.js`,
+  then filters the results down to the three categories above.
 - Results render in a slide-in side panel: a tally per category, then a
   collapsible, categorised list of flagged issues — same model as the Word
   task pane.
-- **Click a flagged issue to jump to it**: the page scrolls to and briefly
+- **The panel pushes the page's content to the left** (rather than
+  overlaying on top of it) so flagged text isn't hidden underneath the
+  panel. This is a best-effort layout shift — a handful of sites have their
+  own elements pinned to the real right edge of the screen that this can't
+  move, but the main content area reflows correctly in the normal case.
+- **Click a flagged issue to jump to it**: the page scrolls to and
   highlights (a yellow outline, not an edit) the exact paragraph/list item
-  on the Canvas page.
+  on the Canvas page, and **stays highlighted for as long as that issue
+  stays selected** — click a different issue to move the highlight, or
+  click the same issue again to deselect and clear it.
 - It is **read-only** — it only reads `textContent` and toggles a temporary
-  CSS class for highlighting. It never edits the page or saves anything
-  back to Canvas.
+  CSS class for highlighting, plus a CSS margin on the page while the panel
+  is open. It never edits the page or saves anything back to Canvas.
 
 **Known limitation:** it checks whatever is currently *rendered* on the
 page (a Page/Assignment/Discussion/Syllabus "view", or the Syllabus). It
 does not yet reach inside the Rich Content Editor while you're actively
 editing (TinyMCE's edit iframe), and it checks one page at a time rather
 than bulk-scanning an entire course — view/publish the page first, then run
-the checker, as a last-hurdle pass before sharing with students.
+the checker, as a last-hurdle editorial pass before sharing with students.
 
 **Installing it locally (unpacked, for now — not published to the Chrome
 Web Store):**
@@ -168,8 +192,8 @@ Web Store):**
 3. Click **Load unpacked** and select the `chrome-extension/` folder in
    this repo.
 4. Open a Canvas Page, Assignment, Discussion Topic, or Syllabus page, then
-   click the IDEA Lab Script Checker icon in the toolbar to run a check.
-   Click it again to close the panel.
+   click the IDEA Lab Canvas Editorial Checker icon in the toolbar to run a
+   check. Click it again to close the panel.
 
 By default the extension works on any page (it only activates when you
 click the icon), so there's nothing Canvas-domain-specific to configure —

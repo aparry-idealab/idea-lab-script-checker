@@ -1,25 +1,99 @@
 /**
- * IDEA Lab Script Checker — Canvas panel
+ * IDEA Lab Canvas Editorial Checker — panel
  * ---------------------------------------------------------------
  * Injected on toolbar-icon click. Extracts the current Canvas page's
  * rich-text content, runs it through the (unchanged) ScriptCheckerRules
  * engine, and renders a categorised, tallied, collapsible results
  * panel — the same read-only "quick checker, not a substitute for
  * editorial/subject review" model as the Word add-in. Clicking a
- * flagged issue scrolls to and briefly highlights the corresponding
- * element on the page. Never edits page content.
+ * flagged issue scrolls to and highlights the corresponding element
+ * on the page for as long as that issue stays selected. Never edits
+ * page content.
+ *
+ * Scope: this tool is specifically for the media team's editorial
+ * pass against the House Style and Conventions Guide, so only the
+ * categories derived from that guide (plus general proofreading) are
+ * shown here. Read-aloud flow, bullet-point-in-script, and
+ * session/activity numbering are script-specific checks from the
+ * other two style documents and are intentionally excluded.
  */
 (function () {
   "use strict";
 
-  var PANEL_ID = "idea-lab-script-checker-panel";
+  var PANEL_ID = "idea-lab-canvas-editorial-checker-panel";
+  var PANEL_WIDTH_PX = 360; // must match the panel width in panel.css
+  var LAYOUT_SHIFT_ATTR = "data-idea-lab-orig-margin-right";
+  var ALLOWED_CATEGORIES = ["obviousErrors", "houseStyle", "inclusivity"];
+
+  /**
+   * Shifts the page's own content left by the panel's width so text
+   * isn't hidden underneath the fixed-position panel, instead of just
+   * overlaying on top of it. Best-effort: elements the host page
+   * itself fixes to the right edge of the viewport (independent of
+   * document flow) may still sit under the panel — we can't rewrite
+   * the host page's own CSS — but the main scrollable content area
+   * reflows correctly in the common case.
+   */
+  function applyLayoutShift() {
+    var html = document.documentElement;
+    if (!html.hasAttribute(LAYOUT_SHIFT_ATTR)) {
+      html.setAttribute(LAYOUT_SHIFT_ATTR, html.style.marginRight || "");
+    }
+    html.style.transition = "margin-right 0.2s ease";
+    html.style.marginRight = PANEL_WIDTH_PX + "px";
+  }
+
+  function restoreLayoutShift() {
+    var html = document.documentElement;
+    if (html.hasAttribute(LAYOUT_SHIFT_ATTR)) {
+      html.style.marginRight = html.getAttribute(LAYOUT_SHIFT_ATTR);
+      html.removeAttribute(LAYOUT_SHIFT_ATTR);
+    }
+  }
+
+  /** Removes any highlight left on the page, regardless of which script injection applied it. */
+  function clearPageHighlight() {
+    document.querySelectorAll(".idea-lab-highlight-target").forEach(function (el) {
+      el.classList.remove("idea-lab-highlight-target");
+    });
+  }
+
+  function closePanel(panelEl) {
+    clearPageHighlight();
+    restoreLayoutShift();
+    panelEl.remove();
+  }
 
   // Toggle: if the panel is already open, close it instead of
   // re-injecting (the icon acts as an open/close switch).
   var existing = document.getElementById(PANEL_ID);
   if (existing) {
-    existing.remove();
+    closePanel(existing);
     return;
+  }
+
+  /** Keeps only the categories relevant to the Canvas Editorial Checker's scope (see module comment above). */
+  function restrictToAllowedCategories(result) {
+    var categoryOrder = result.categoryOrder.filter(function (catId) {
+      return ALLOWED_CATEGORIES.indexOf(catId) !== -1;
+    });
+    var categories = {};
+    var countsByCategory = {};
+    categoryOrder.forEach(function (catId) {
+      categories[catId] = result.categories[catId];
+      countsByCategory[catId] = result.countsByCategory[catId] || 0;
+    });
+    var issues = result.issues.filter(function (issue) {
+      return ALLOWED_CATEGORIES.indexOf(issue.category) !== -1;
+    });
+    return {
+      totalWords: result.totalWords,
+      totalIssues: issues.length,
+      categoryOrder: categoryOrder,
+      categories: categories,
+      countsByCategory: countsByCategory,
+      issues: issues,
+    };
   }
 
   var extraction = window.IdeaLabCanvasDomExtractor && window.IdeaLabCanvasDomExtractor.extract();
@@ -30,23 +104,25 @@
   if (!extraction || extraction.paragraphs.length === 0) {
     panel.innerHTML =
       '<div class="idea-lab-header">' +
-      "<span>IDEA Lab Script Checker</span>" +
+      "<span>IDEA Lab Canvas Editorial Checker</span>" +
       '<button class="idea-lab-close" aria-label="Close">×</button>' +
       "</div>" +
       '<div class="idea-lab-empty">Couldn\u2019t find any checkable content on this page. This works on Canvas Page, Assignment, Discussion, and Syllabus <em>view</em> pages (not yet the Rich Content Editor while actively editing).</div>';
     document.body.appendChild(panel);
+    applyLayoutShift();
     panel.querySelector(".idea-lab-close").addEventListener("click", function () {
-      panel.remove();
+      closePanel(panel);
     });
     return;
   }
 
   var paragraphs = extraction.paragraphs;
-  var result = ScriptCheckerRules.checkDocument(
+  var rawResult = ScriptCheckerRules.checkDocument(
     paragraphs.map(function (p) {
       return { text: p.text, isListItem: p.isListItem, style: p.style };
     })
   );
+  var result = restrictToAllowedCategories(rawResult);
 
   render(result, paragraphs);
 
@@ -59,7 +135,7 @@
   function render(result, paragraphs) {
     var html =
       '<div class="idea-lab-header">' +
-      "<span>IDEA Lab Script Checker</span>" +
+      "<span>IDEA Lab Canvas Editorial Checker</span>" +
       '<button class="idea-lab-close" aria-label="Close">×</button>' +
       "</div>" +
       '<div class="idea-lab-banner">\u26A0\uFE0F Quick checker only — not a substitute for editorial or subject review.</div>' +
@@ -148,12 +224,13 @@
     html += "</div>";
     panel.innerHTML = html;
     document.body.appendChild(panel);
+    applyLayoutShift();
     wireUpEvents(result);
   }
 
   function wireUpEvents(result) {
     panel.querySelector(".idea-lab-close").addEventListener("click", function () {
-      panel.remove();
+      closePanel(panel);
     });
 
     panel.querySelectorAll(".idea-lab-tally-badge").forEach(function (badge) {
@@ -180,21 +257,34 @@
     });
   }
 
-  var highlightTimer = null;
-  function highlightParagraph(paragraphIndex, issueEl) {
+  // The currently-highlighted page element, if any — kept highlighted
+  // for as long as its issue stays selected (no auto-clearing timeout).
+  var currentHighlightedEl = null;
+
+  function deselectCurrentIssue() {
+    if (currentHighlightedEl) {
+      currentHighlightedEl.classList.remove("idea-lab-highlight-target");
+      currentHighlightedEl = null;
+    }
     panel.querySelectorAll(".idea-lab-issue.active").forEach(function (n) {
       n.classList.remove("active");
     });
-    if (issueEl) issueEl.classList.add("active");
+  }
+
+  function highlightParagraph(paragraphIndex, issueEl) {
+    var wasAlreadySelected = issueEl.classList.contains("active");
+    deselectCurrentIssue();
+
+    // Clicking an already-selected issue again deselects it (and
+    // clears its highlight) rather than re-selecting it.
+    if (wasAlreadySelected) return;
 
     var para = paragraphs[paragraphIndex];
     if (!para || !para.el) return;
 
+    issueEl.classList.add("active");
     para.el.scrollIntoView({ behavior: "smooth", block: "center" });
     para.el.classList.add("idea-lab-highlight-target");
-    if (highlightTimer) clearTimeout(highlightTimer);
-    highlightTimer = setTimeout(function () {
-      para.el.classList.remove("idea-lab-highlight-target");
-    }, 2500);
+    currentHighlightedEl = para.el;
   }
 })();
