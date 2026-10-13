@@ -1,0 +1,72 @@
+<!doctype html>
+<!--
+  Small extension-owned window used only to request the site-scoped
+  "Auto-open on this site" permission. This has to be a real click
+  inside an extension page (not a message relayed from a content
+  script) because chrome.permissions.request() only works during a
+  genuine, synchronous user gesture — see permission.js.
+-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Auto-open on this site</title>
+    <style>
+      body {
+        font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        margin: 0;
+        padding: 20px;
+        color: #1f2430;
+        background: #fff;
+      }
+      h1 {
+        font-size: 16px;
+        margin: 0 0 10px;
+      }
+      p {
+        margin: 0 0 16px;
+        color: #45505f;
+      }
+      .buttons {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+      button {
+        font: inherit;
+        padding: 8px 14px;
+        border-radius: 6px;
+        border: 1px solid #c7ccd4;
+        background: #f3f4f6;
+        cursor: pointer;
+      }
+      button.primary {
+        background: #2f5fdb;
+        border-color: #2f5fdb;
+        color: #fff;
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
+      #status {
+        margin-top: 12px;
+        font-size: 13px;
+        color: #45505f;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Auto-open on this site?</h1>
+    <p id="explainer">
+      This lets the IDEA Lab Canvas Editorial Checker panel stay open and
+      refresh itself automatically as you move between pages on this site.
+      Chrome will remember your choice until you turn it off again.
+    </p>
+    <div class="buttons">
+      <button id="cancel">Cancel</button>
+      <button id="grant" class="primary">Allow on this site</button>
+    </div>
+    <div id="status"></div>
+    <script src="permission.js"></script>
+  </body>
+</html>

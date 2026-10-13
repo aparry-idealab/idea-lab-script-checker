@@ -313,21 +313,36 @@
       updateAutoModeButton(button, !!(response && response.enabled));
     });
 
+    // Turning auto-mode ON opens a small extension popup window
+    // (permission.html) where the actual browser permission prompt is
+    // triggered — Chrome requires that call to happen inside a direct
+    // click in an extension page, which a message from this content
+    // script can't provide. This listener picks up the outcome once
+    // that window closes (granted, denied, or just closed).
+    chrome.runtime.onMessage.addListener(function (message) {
+      if (!message || message.type !== "auto-mode-result" || message.originPattern !== ORIGIN_PATTERN) {
+        return;
+      }
+      button.disabled = false;
+      updateAutoModeButton(button, !!message.enabled);
+    });
+
     button.addEventListener("click", function () {
       var currentlyOn = button.classList.contains("on");
-      button.disabled = true;
-      var message = currentlyOn
-        ? { type: "disable-auto-mode", originPattern: ORIGIN_PATTERN }
-        : { type: "enable-auto-mode", originPattern: ORIGIN_PATTERN };
-      chrome.runtime.sendMessage(message, function (response) {
-        button.disabled = false;
-        if (response && response.ok) {
-          updateAutoModeButton(button, !currentlyOn);
-        } else if (!currentlyOn) {
-          // Permission prompt was dismissed/denied — stay off, no error needed beyond that.
-          updateAutoModeButton(button, false);
-        }
-      });
+      if (currentlyOn) {
+        button.disabled = true;
+        chrome.runtime.sendMessage({ type: "disable-auto-mode", originPattern: ORIGIN_PATTERN }, function (response) {
+          button.disabled = false;
+          updateAutoModeButton(button, response && response.ok ? false : currentlyOn);
+        });
+        return;
+      }
+
+      // Don't disable the button here — the popup window may stay
+      // open for a while, and the result arrives asynchronously via
+      // the "auto-mode-result" message above.
+      button.textContent = "📌 Check the popup window…";
+      chrome.runtime.sendMessage({ type: "open-permission-window", originPattern: ORIGIN_PATTERN });
     });
   }
 

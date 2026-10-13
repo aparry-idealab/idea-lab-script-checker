@@ -184,11 +184,14 @@ rather it stay open and automatically refresh its results every time you
 move to a new Canvas page, click **"📌 Auto-open: off"** in the panel's
 header to turn it on for the current site:
 
-- The first time you turn it on, Chrome will show a one-time permission
-  prompt naming the **specific site you're on** (e.g.
-  "yourschool.instructure.com") — never "all websites". This is required
-  so the panel can re-inject itself on new pages without you clicking the
-  icon each time.
+- The first time you turn it on, a small popup window appears asking you
+  to confirm — click **"Allow on this site"** there (not in the main
+  panel) and Chrome will then show its own one-time permission prompt
+  naming the **specific site you're on** (e.g.
+  "yourschool.instructure.com") — never "all websites". The popup step is
+  required by Chrome's security model (the actual permission grant has to
+  happen from a direct click inside an extension window, not relayed from
+  the page). The popup closes itself once you decide.
 - Once granted, the panel reappears and re-checks the content automatically
   on every page you navigate to on that site, until you turn the toggle
   back off (which also revokes the permission) or remove it via Chrome's

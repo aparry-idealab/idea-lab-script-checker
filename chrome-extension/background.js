@@ -14,6 +14,13 @@
  * new page on that site. The toolbar icon still just opens/closes
  * the panel on the current page either way.
  *
+ * chrome.permissions.request() only works inside a direct, synchronous
+ * user gesture — it does NOT work if triggered from a message relayed
+ * from a content script (the gesture context doesn't survive the hop
+ * to the service worker). So granting the permission happens in
+ * permission.html, a small extension-owned popup window opened from
+ * here, where the user's click on "Allow" is itself the gesture.
+ *
  * Scope for the Canvas Editorial Checker: house style/editorial
  * compliance and inclusivity (both from the House Style and
  * Conventions Guide) plus general obvious-error proofreading — see
@@ -93,6 +100,30 @@ async function restoreAutoModeScripts() {
 chrome.runtime.onStartup.addListener(restoreAutoModeScripts);
 chrome.runtime.onInstalled.addListener(restoreAutoModeScripts);
 
+// Tracks permission.html popup windows opened for a pending "turn on
+// auto-mode" request, keyed by that window's id, so that whenever the
+// window closes (Allow clicked, Cancel clicked, or the user just
+// closes it with the X) we can tell the originating tab's panel what
+// actually happened and un-stick its toggle button.
+var pendingPermissionWindows = {};
+
+chrome.windows.onRemoved.addListener(function (windowId) {
+  var info = pendingPermissionWindows[windowId];
+  if (!info) return;
+  delete pendingPermissionWindows[windowId];
+  getAutoModeOrigins().then(function (origins) {
+    chrome.tabs
+      .sendMessage(info.tabId, {
+        type: "auto-mode-result",
+        originPattern: info.originPattern,
+        enabled: !!origins[info.originPattern],
+      })
+      .catch(function () {
+        // Tab may have navigated away or closed — nothing to update.
+      });
+  });
+});
+
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   if (!message || !message.type) return false;
 
@@ -103,31 +134,38 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     return true; // keep the message channel open for the async response
   }
 
-  if (message.type === "enable-auto-mode") {
+  if (message.type === "open-permission-window") {
     var originPattern = message.originPattern;
-    chrome.permissions
-      .request({ origins: [originPattern] })
-      .then(function (granted) {
-        if (!granted) {
-          sendResponse({ ok: false, reason: "permission-denied" });
-          return;
-        }
-        return chrome.scripting
-          .registerContentScripts([
-            {
-              id: registeredScriptIdFor(originPattern),
-              matches: [originPattern],
-              js: CONTENT_SCRIPT_FILES,
-              css: CONTENT_SCRIPT_CSS,
-              runAt: "document_idle",
-            },
-          ])
-          .then(function () {
-            return setAutoModeOrigin(originPattern, true);
-          })
-          .then(function () {
-            sendResponse({ ok: true });
-          });
+    var tabId = sender.tab && sender.tab.id;
+    if (!originPattern || !tabId) return false;
+    var url =
+      chrome.runtime.getURL("permission.html") + "?origin=" + encodeURIComponent(originPattern);
+    chrome.windows.create(
+      { url: url, type: "popup", width: 420, height: 280, focused: true },
+      function (win) {
+        if (win) pendingPermissionWindows[win.id] = { tabId: tabId, originPattern: originPattern };
+      }
+    );
+    return false;
+  }
+
+  if (message.type === "finish-enable-auto-mode") {
+    var pattern = message.originPattern;
+    chrome.scripting
+      .registerContentScripts([
+        {
+          id: registeredScriptIdFor(pattern),
+          matches: [pattern],
+          js: CONTENT_SCRIPT_FILES,
+          css: CONTENT_SCRIPT_CSS,
+          runAt: "document_idle",
+        },
+      ])
+      .then(function () {
+        return setAutoModeOrigin(pattern, true);
+      })
+      .then(function () {
+        sendResponse({ ok: true });
       })
       .catch(function (err) {
         sendResponse({ ok: false, reason: String(err) });
