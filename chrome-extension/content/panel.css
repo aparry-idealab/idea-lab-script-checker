@@ -32,11 +32,41 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   padding: 12px 14px;
   font-weight: 600;
   font-size: 14px;
   border-bottom: 1px solid #e1dfdd;
   background: #f3f2f1;
+}
+
+#idea-lab-canvas-editorial-checker-panel .idea-lab-header span {
+  flex: 1;
+  min-width: 0;
+}
+
+#idea-lab-canvas-editorial-checker-panel .idea-lab-automode-toggle {
+  all: unset;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 5px 8px;
+  border-radius: 12px;
+  background: #e1dfdd;
+  color: #444;
+  white-space: nowrap;
+}
+#idea-lab-canvas-editorial-checker-panel .idea-lab-automode-toggle:hover {
+  background: #d2d0ce;
+}
+#idea-lab-canvas-editorial-checker-panel .idea-lab-automode-toggle.on {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+#idea-lab-canvas-editorial-checker-panel .idea-lab-automode-toggle:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 #idea-lab-canvas-editorial-checker-panel .idea-lab-close {

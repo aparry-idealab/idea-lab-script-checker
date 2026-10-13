@@ -173,6 +173,29 @@ and aren't relevant to an editorial pass over a Canvas Page or Assignment.
 - It is **read-only** — it only reads `textContent` and toggles a temporary
   CSS class for highlighting, plus a CSS margin on the page while the panel
   is open. It never edits the page or saves anything back to Canvas.
+- **The toolbar icon is an open/close toggle**: click it to open the panel
+  on the current page, click it again to close it.
+
+**Keeping the panel open as you browse (optional, off by default):** by
+default the panel only appears when you click the icon, and closes again
+if you navigate to a new page (a fresh content-script injection each time,
+the same explicit "click-to-run" model as the Word add-in). If you'd
+rather it stay open and automatically refresh its results every time you
+move to a new Canvas page, click **"📌 Auto-open: off"** in the panel's
+header to turn it on for the current site:
+
+- The first time you turn it on, Chrome will show a one-time permission
+  prompt naming the **specific site you're on** (e.g.
+  "yourschool.instructure.com") — never "all websites". This is required
+  so the panel can re-inject itself on new pages without you clicking the
+  icon each time.
+- Once granted, the panel reappears and re-checks the content automatically
+  on every page you navigate to on that site, until you turn the toggle
+  back off (which also revokes the permission) or remove it via Chrome's
+  "Site access" settings for the extension.
+- The toolbar icon still works as a simple open/close toggle for the
+  panel on whatever page you're currently on, whether or not auto-open is
+  turned on.
 
 **Known limitation:** it checks whatever is currently *rendered* on the
 page (a Page/Assignment/Discussion/Syllabus "view", or the Syllabus). It
@@ -208,7 +231,7 @@ if your institution's Canvas uses a custom domain rather than
 `*.instructure.com`, it will still work, since `activeTab` grants access to
 whatever tab is currently active regardless of domain.
 
-## Sharing this with colleagues (recommended, no setup required for them)
+## Sharing the Word add-in with colleagues (recommended, no setup required for them)
 
 The add-in is hosted on **GitHub Pages** at: 
 
@@ -242,6 +265,40 @@ admin access but then every targeted user gets the add-in automatically.
 > points at `https://localhost:3000` and is only useful on a machine that
 > also has this repo checked out and `npm start` running (see below).
 > `manifest-share.xml` is the one to actually hand out.
+
+## Sharing the Chrome extension with colleagues
+
+Unlike the Word add-in, an unpacked Chrome extension has no auto-updating
+hosted URL to just send someone — they need the extension's files on disk
+and to load them via Developer mode. The easiest way for a small team:
+
+1. Download the extension as a zip. Either:
+   - Grab the latest built zip from the repo's
+     [**Releases**](https://github.com/aparry-idealab/idea-lab-script-checker/releases)
+     page (look for the most recent `idea-lab-canvas-editorial-checker-vX.Y.Z.zip`
+     asset), **or**
+   - Clone/download the repo yourself, run `npm run build:extension`, then
+     zip up the `chrome-extension/` folder.
+2. Send your colleague the zip file (email, Slack, shared drive — anything).
+3. They unzip it anywhere on their machine (anywhere is fine — just don't
+   delete/move the folder afterwards, Chrome keeps pointing at it).
+4. In Chrome: `chrome://extensions` → turn on **Developer mode** (top-right
+   toggle) → **Load unpacked** → select the unzipped folder.
+5. Done — the icon appears in their toolbar immediately.
+
+**Updates:** because this is an unpacked, unpublished extension, updates
+don't roll out automatically — when the rule engine or extension changes,
+re-zip and re-share it, and each person clicks the reload icon on the
+extension's card in `chrome://extensions` (or re-does "Load unpacked" if
+they replaced the folder).
+
+**If you want push-button updates for the whole team longer-term:**
+publish it to the Chrome Web Store as an **Unlisted** item (not searchable
+publicly — only people with the direct link can install it). This costs a
+one-off $5 Chrome Web Store developer registration fee and goes through
+Google's review process (usually hours to a few days), but after that,
+updates roll out to everyone automatically and nobody needs Developer
+mode turned on. Not set up yet — let me know if you'd like this done.
 
 ## Sideloading in Word on a Mac (for local development)
 

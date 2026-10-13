@@ -24,6 +24,11 @@
   var PANEL_WIDTH_PX = 360; // must match the panel width in panel.css
   var LAYOUT_SHIFT_ATTR = "data-idea-lab-orig-margin-right";
   var ALLOWED_CATEGORIES = ["obviousErrors", "houseStyle", "inclusivity"];
+  // Match pattern for "Auto-open on this site": grants/revokes a
+  // site-scoped (not "all websites") host permission and registers a
+  // persistent content script so the panel re-injects itself on every
+  // new page you navigate to on this origin, until turned off again.
+  var ORIGIN_PATTERN = location.origin + "/*";
 
   /**
    * Shifts the page's own content left by the panel's width so text
@@ -105,6 +110,7 @@
     panel.innerHTML =
       '<div class="idea-lab-header">' +
       "<span>IDEA Lab Canvas Editorial Checker</span>" +
+      '<button class="idea-lab-automode-toggle" title="Keep this panel open and auto-refreshing as you browse this site">📌 Auto-open: off</button>' +
       '<button class="idea-lab-close" aria-label="Close">×</button>' +
       "</div>" +
       '<div class="idea-lab-empty">Couldn\u2019t find any checkable content on this page. This works on Canvas Page, Assignment, Discussion, and Syllabus <em>view</em> pages (not yet the Rich Content Editor while actively editing).</div>';
@@ -113,6 +119,7 @@
     panel.querySelector(".idea-lab-close").addEventListener("click", function () {
       closePanel(panel);
     });
+    wireUpAutoModeToggle();
     return;
   }
 
@@ -136,6 +143,7 @@
     var html =
       '<div class="idea-lab-header">' +
       "<span>IDEA Lab Canvas Editorial Checker</span>" +
+      '<button class="idea-lab-automode-toggle" title="Keep this panel open and auto-refreshing as you browse this site">📌 Auto-open: off</button>' +
       '<button class="idea-lab-close" aria-label="Close">×</button>' +
       "</div>" +
       '<div class="idea-lab-banner">\u26A0\uFE0F Quick checker only — not a substitute for editorial or subject review.</div>' +
@@ -232,6 +240,7 @@
     panel.querySelector(".idea-lab-close").addEventListener("click", function () {
       closePanel(panel);
     });
+    wireUpAutoModeToggle();
 
     panel.querySelectorAll(".idea-lab-tally-badge").forEach(function (badge) {
       badge.addEventListener("click", function () {
@@ -287,4 +296,39 @@
     para.el.classList.add("idea-lab-highlight-target");
     currentHighlightedEl = para.el;
   }
+  function updateAutoModeButton(button, enabled) {
+    button.setAttribute("aria-pressed", enabled ? "true" : "false");
+    button.classList.toggle("on", enabled);
+    button.textContent = enabled ? "📌 Auto-open: on" : "📌 Auto-open: off";
+    button.title = enabled
+      ? "Auto-open is on for " + location.hostname + " — click to turn off."
+      : "Keep this panel open and auto-refreshing as you browse this site";
+  }
+
+  function wireUpAutoModeToggle() {
+    var button = panel.querySelector(".idea-lab-automode-toggle");
+    if (!button) return;
+
+    chrome.runtime.sendMessage({ type: "get-auto-mode-status", originPattern: ORIGIN_PATTERN }, function (response) {
+      updateAutoModeButton(button, !!(response && response.enabled));
+    });
+
+    button.addEventListener("click", function () {
+      var currentlyOn = button.classList.contains("on");
+      button.disabled = true;
+      var message = currentlyOn
+        ? { type: "disable-auto-mode", originPattern: ORIGIN_PATTERN }
+        : { type: "enable-auto-mode", originPattern: ORIGIN_PATTERN };
+      chrome.runtime.sendMessage(message, function (response) {
+        button.disabled = false;
+        if (response && response.ok) {
+          updateAutoModeButton(button, !currentlyOn);
+        } else if (!currentlyOn) {
+          // Permission prompt was dismissed/denied — stay off, no error needed beyond that.
+          updateAutoModeButton(button, false);
+        }
+      });
+    });
+  }
+
 })();
